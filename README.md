@@ -40,10 +40,8 @@ The training pipeline includes robust data augmentation:
 ## Testing Framework
 
 The `test_model.py` includes comprehensive tests:
-1. Model Architecture Validation
-   - Parameter count check (<25,000)
-   - CNN layer structure verification
-   - MaxPool placement validation
+1. Parameter Count Validation
+   - Check if total number of parameters is less than 25,000
 2. Performance Testing
    - Accuracy threshold (>95%)
 3. Input/Output Shape Validation
