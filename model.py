@@ -4,16 +4,28 @@ import torch.nn.functional as F
 
 class MNISTModel(nn.Module):
     def __init__(self):
-        super(MNISTModel, self).__init__()
-        self.conv1 = nn.Conv2d(1, 8, kernel_size=3)  # 28x28 -> 26x26
-        self.conv2 = nn.Conv2d(8, 16, kernel_size=3)  # 26x26 -> 24x24
-        self.fc1 = nn.Linear(16 * 24 * 24, 128)
-        self.fc2 = nn.Linear(128, 10)
+            super(MNISTModel, self).__init__()
+            self.features = nn.Sequential(
+                # First conv layer: 1 -> 6 channels, 3x3 kernel
+                nn.Conv2d(1, 6, kernel_size=3, padding=1),
+                nn.ReLU(),
+                nn.MaxPool2d(2),
+                
+                # Second conv layer: 6 -> 12 channels, 3x3 kernel
+                nn.Conv2d(6, 12, kernel_size=3, padding=1),
+                nn.ReLU(),
+                nn.MaxPool2d(2),
+            )
+            
+            # Fully connected layers
+            self.classifier = nn.Sequential(
+                nn.Linear(12 * 7 * 7, 24),
+                nn.ReLU(),
+                nn.Linear(24, 10)
+            )
 
     def forward(self, x):
-        x = F.relu(self.conv1(x))
-        x = F.relu(self.conv2(x))
-        x = x.view(-1, 16 * 24 * 24)
-        x = F.relu(self.fc1(x))
-        x = self.fc2(x)
-        return F.log_softmax(x, dim=1) 
+        x = self.features(x)
+        x = torch.flatten(x, 1)
+        x = self.classifier(x)
+        return x
