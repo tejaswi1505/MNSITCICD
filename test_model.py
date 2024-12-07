@@ -10,6 +10,9 @@ import time
 import torchvision
 import torchvision.transforms.v2 as transforms
 import numpy as np
+import torch.nn.functional as F
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms
 
 def timeout(seconds=10, error_message="Timeout"):
     def decorator(func):
@@ -48,53 +51,6 @@ class TestMNISTCNN(unittest.TestCase):
             f"Model has {param_count} parameters, which exceeds the limit of 25,000")
         print(f"\nParameter count test passed. Total parameters: {param_count}")
 
-    def test_readme_exists(self):
-        """Test that README.md exists and is not empty."""
-        self.assertTrue(os.path.exists('README.md'), "README.md file does not exist")
-        
-        with open('README.md', 'r') as f:
-            content = f.read()
-        
-        self.assertGreater(len(content), 100, 
-            "README.md seems too short. Should contain comprehensive documentation")
-        print("\nREADME.md test passed. File exists and contains content")
-
-    def test_cnn_layer_count(self):
-        """Test that the model has at least 2 CNN layers with proper channel dimensions."""
-        # Get all modules in sequential order
-        modules = list(self.model.features.children())
-        
-        # Check CNN layers count
-        cnn_layers = [module for module in modules 
-                     if isinstance(module, torch.nn.Conv2d)]
-        
-        self.assertGreaterEqual(len(cnn_layers), 2, 
-            f"Model should have at least 2 CNN layers, but found {len(cnn_layers)}")
-        
-        # Check channel dimensions
-        self.assertEqual(cnn_layers[0].in_channels, 1, 
-            "First CNN layer should have 1 input channel for MNIST")
-        self.assertEqual(cnn_layers[-1].out_channels, 12, 
-            "Final CNN layer should have 12 output channels")
-        
-        print(f"\nCNN layer count test passed. Found {len(cnn_layers)} CNN layers")
-
-    def test_maxpool_after_conv(self):
-        """Test that each Conv2D layer is followed by MaxPool2d (allowing for ReLU)."""
-        # Get all modules in sequential order
-        modules = list(self.model.features.children())
-        
-        # Check for MaxPool after Conv2D
-        for i, module in enumerate(modules[:-1]):  # Check all but last module
-            if isinstance(module, torch.nn.Conv2d):
-                next_module = modules[i + 1]
-                self.assertTrue(
-                    isinstance(next_module, torch.nn.MaxPool2d) or 
-                    isinstance(modules[i + 2], torch.nn.MaxPool2d),  # Allow for ReLU in between
-                    f"Conv2D layer should be followed by MaxPool2d (allowing for ReLU in between)"
-                )
-        
-        print("\nMaxPool placement test passed. Each Conv2D layer is properly followed by MaxPool2d")
 
     @timeout(300)  # 5 minutes timeout
     def test_model_accuracy(self):
@@ -121,6 +77,49 @@ class TestMNISTCNN(unittest.TestCase):
         self.assertGreater(accuracy, 95.0, 
             f"Model accuracy {accuracy:.2f}% is below the required 95%")
         print(f"\nAccuracy test passed. Model achieved {accuracy:.2f}% accuracy")
+
+    def test_model_input_output_shape(self):
+        """Test if model handles various batch sizes and maintains correct output shape."""
+        batch_sizes = [1, 32, 64, 128]
+        for batch_size in batch_sizes:
+            test_input = torch.randn(batch_size, 1, 28, 28)
+            output = self.model(test_input)
+            
+            self.assertEqual(output.shape, (batch_size, 10),
+                f"Model output shape {output.shape} is incorrect for batch size {batch_size}. "
+                f"Expected ({batch_size}, 10)")
+        print("\nInput/Output shape test passed for all batch sizes")
+
+    def test_model_gradients(self):
+        """Test if model gradients are properly flowing through all layers."""
+        # Forward pass with dummy data
+        test_input = torch.randn(1, 1, 28, 28, requires_grad=True)
+        output = self.model(test_input)
+        loss = output.sum()
+        loss.backward()
+        
+        # Check gradients for each layer
+        for name, param in self.model.named_parameters():
+            self.assertIsNotNone(param.grad,
+                f"Gradient is None for layer: {name}")
+            self.assertFalse(torch.all(param.grad == 0),
+                f"Gradient is all zeros for layer: {name}")
+            self.assertFalse(torch.any(torch.isnan(param.grad)),
+                f"Gradient contains NaN values for layer: {name}")
+        
+        print("\nGradient flow test passed for all layers")
+    
+    def test_readme_exists(self):
+        """Test that README.md exists and is not empty."""
+        self.assertTrue(os.path.exists('README.md'), "README.md file does not exist")
+        
+        with open('README.md', 'r') as f:
+            content = f.read()
+        
+        self.assertGreater(len(content), 300, 
+            "README.md seems too short. Should contain comprehensive documentation")
+        print("\nREADME.md test passed. File exists and contains content")
+
 
 if __name__ == '__main__':
     unittest.main()

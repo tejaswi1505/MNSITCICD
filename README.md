@@ -28,7 +28,6 @@ The CNN architecture consists of:
    - ReLU Activation
    - Fully Connected: 24 → 10 units (output layer)
 
-Total Parameters: < 25,000
 
 ## Data Augmentation
 
@@ -47,7 +46,11 @@ The `test_model.py` includes comprehensive tests:
    - MaxPool placement validation
 2. Performance Testing
    - Accuracy threshold (>95%)
-3. Documentation Checks
+3. Input/Output Shape Validation
+    -Test if model handles various batch sizes and maintains correct output shape
+4. Gradient Flow Validation
+    - Test if model gradients are properly flowing through all layers
+5. Documentation Checks
    - README.md existence and completeness
 
 ## CI/CD Pipeline

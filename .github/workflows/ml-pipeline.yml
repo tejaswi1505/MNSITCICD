@@ -25,4 +25,10 @@ jobs:
         
     - name: Run tests
       run: |
-        python -m pytest test_model.py -v 
+        python -m pytest test_model.py -v
+        
+    - name: Upload augmentation examples
+      uses: actions/upload-artifact@v2
+      with:
+        name: augmentation-examples
+        path: augmentation_examples.png
