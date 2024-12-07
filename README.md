@@ -47,7 +47,7 @@ The `test_model.py` includes comprehensive tests:
 2. Performance Testing
    - Accuracy threshold (>95%)
 3. Input/Output Shape Validation
-    -Test if model handles various batch sizes and maintains correct output shape
+    - Test if model handles various batch sizes and maintains correct output shape
 4. Gradient Flow Validation
     - Test if model gradients are properly flowing through all layers
 5. Documentation Checks
